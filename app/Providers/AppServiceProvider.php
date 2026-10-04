@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Project;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,26 +17,21 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        View::composer('layouts.app', function ($view) {
+        if (str_starts_with(config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
+        View::composer('layouts.app', function ($view) {
             $sidebarProjects = collect();
 
             if (Auth::check()) {
-
-                $sidebarProjects = Project::where(
-                    'user_id',
-                    Auth::id()
-                )
-                ->latest()
-                ->take(6)
-                ->get();
-
+                $sidebarProjects = Project::where('user_id', Auth::id())
+                    ->latest()
+                    ->take(6)
+                    ->get();
             }
 
-            $view->with(
-                'sidebarProjects',
-                $sidebarProjects
-            );
+            $view->with('sidebarProjects', $sidebarProjects);
         });
     }
 }
